@@ -1,0 +1,266 @@
+# =============================================================================
+# Proof of Concept — Anton → CIDOC CRM (+ RiC-O)
+# =============================================================================
+# Echte Daten aus dem Anton-Mandanten `fondazionearp` (lokal, DDEV).
+# Zweig: FMA (collection) → FMA HS (recordgroup) → FMA HS K (fonds)
+#        → FMA HS K/30 (file) → FMA HS K/30.3 (item, object_id 15)
+#
+# Das item ist ein Brief: von Marcel Janco (Tel Aviv, 1961) an Hans Arp und
+# Marguerite Arp-Hagenbach. Es demonstriert Hierarchie, Produktions- und
+# Empfangsereignisse, Actors mit Authority-Links, Ort mit Geo, typisierte
+# mehrsprachige Notizen, ein digitales Medium und einen Sachbegriff.
+#
+# Behandelte Real-Daten-Quirks (siehe Inline-Kommentare):
+#   * Geo: Anton speichert POINT(lat lon) -> GeoSPARQL-WKT verlangt POINT(lon lat)
+#   * Datum 0000-00-00 (reception ohne Datum) -> Time-Span weggelassen
+#   * private Notiz (internal_note) -> hier markiert, beim Export ggf. gefiltert
+#
+# Hinweis Turtle: Instanz-IRIs sind relative IRIs gegen @base. `/` ist in
+# Turtle-Präfixnamen (a:object/1) NICHT erlaubt, daher <object/1> + @base.
+# =============================================================================
+
+@base          <https://fondazionearp.anton.example/id/> .
+@prefix crm:   <http://www.cidoc-crm.org/cidoc-crm/> .
+@prefix rico:  <https://www.ica.org/standards/RiC/ontology#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix geo:   <http://www.opengis.net/ont/geosparql#> .
+@prefix crmdig:<http://www.ics.forth.gr/isl/CRMdig/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+# -----------------------------------------------------------------------------
+# 1. Hierarchie (objects) — E22, verbunden via P46 / P46i
+# -----------------------------------------------------------------------------
+
+<object/1>
+    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    crm:P2_has_type <term/level_of_description/collection> ;
+    crm:P1_is_identified_by <object/1/identifier> ;
+    crm:P102_has_title [ a crm:E35_Title ;
+        crm:P190_has_symbolic_content "Fondazione Marguerite Arp: Archiv"@de ] ;
+    crm:P46_is_composed_of <object/10> .
+
+<object/1/identifier> a crm:E42_Identifier ;
+    crm:P2_has_type <term/identifier_type/reference_number> ;
+    crm:P190_has_symbolic_content "FMA" .
+
+<object/10>
+    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    crm:P2_has_type <term/level_of_description/recordgroup> ;
+    crm:P1_is_identified_by [ a crm:E42_Identifier ;
+        crm:P190_has_symbolic_content "FMA HS" ] ;
+    crm:P102_has_title [ a crm:E35_Title ;
+        crm:P190_has_symbolic_content "Manuskripte, Typoskripte; umfasst hauptsächlich Dokumente bis zum Tod von Marguerite Arp-Hagenbach (1994)."@de ] ;
+    crm:P46i_forms_part_of <object/1> ;
+    crm:P46_is_composed_of <object/12> .
+
+<object/12>
+    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    crm:P2_has_type <term/level_of_description/fonds> ;
+    crm:P1_is_identified_by [ a crm:E42_Identifier ;
+        crm:P190_has_symbolic_content "FMA HS K" ] ;
+    crm:P102_has_title [ a crm:E35_Title ;
+        crm:P190_has_symbolic_content "Korrespondenz"@de ] ;
+    crm:P46i_forms_part_of <object/10> ;
+    crm:P46_is_composed_of <object/13> .
+
+<object/13>
+    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    crm:P2_has_type <term/level_of_description/file> ;
+    crm:P1_is_identified_by [ a crm:E42_Identifier ;
+        crm:P190_has_symbolic_content "FMA HS K/30" ] ;
+    crm:P102_has_title [ a crm:E35_Title ;
+        crm:P190_has_symbolic_content "Korrespondenz, Druckerzeugnisse, Akten zur Reise ins \"Heilige Land\" (Ägypten, Palästina, Israel, Jordanien) sowie Aufenthalt in Ein Hod von Hans/Jean Arp / Marguerite Arp-Hagenbach"@de ] ;
+    crm:P46i_forms_part_of <object/12> ;
+    crm:P46_is_composed_of <object/15> .
+
+# -----------------------------------------------------------------------------
+# 2. Das item: der Brief (object_id 15)
+# -----------------------------------------------------------------------------
+
+<object/15>
+    a crm:E22_Human-Made_Object , rico:Record ;
+    crm:P2_has_type <term/level_of_description/item> ;
+    crm:P1_is_identified_by [ a crm:E42_Identifier ;
+        crm:P2_has_type <term/identifier_type/reference_number> ;
+        crm:P190_has_symbolic_content "FMA HS K/30.3" ] ;
+    crm:P102_has_title [ a crm:E35_Title ;
+        crm:P190_has_symbolic_content "Brief von Marcel Janco aus Tel Aviv an Hans Arp und Marguerite Arp-Hagenbach"@de ] ;
+    crm:P46i_forms_part_of <object/13> ;
+    # Ereignisse (s. §3): produziert durch, empfangen durch
+    crm:P108i_was_produced_by <event/8> ;
+    crm:P30i_custody_transferred_through <event/731> , <event/732> ;
+    # Sachbegriff / Aboutness (objects_keywords)
+    crm:P67_refers_to <keyword/2> ;
+    # typisierte Notizen (§4)
+    crm:P67i_is_referred_to_by <note/14> , <note/89> , <note/2986> , <note/3475> ;
+    # digitale Repräsentation (§5)
+    crm:P138i_has_representation <media/76> .
+
+# -----------------------------------------------------------------------------
+# 3. Ereignisse (antonevents)
+# -----------------------------------------------------------------------------
+
+# event 8: creation -> E12 Production (Absender schreibt den Brief)
+<event/8>
+    a crm:E12_Production ;
+    crm:P2_has_type <term/event_type/creation> ;
+    crm:P108_has_produced <object/15> ;
+    crm:P14_carried_out_by <actor/5> ;        # Marcel Janco
+    crm:P7_took_place_at <place/5> ;          # Tel Aviv
+    crm:P4_has_time-span <event/8/timespan> .
+
+<event/8/timespan> a crm:E52_Time-Span ;
+    crm:P82a_begin_of_the_begin "1961-02-28"^^xsd:date ;
+    crm:P82b_end_of_the_end    "1961-02-28"^^xsd:date .
+
+# event 731: reception -> E10 Transfer of Custody (Empfänger Hans Arp)
+# Quirk: date_start/date_end = 0000-00-00 -> kein Time-Span ausgegeben.
+<event/731>
+    a crm:E10_Transfer_of_Custody ;
+    crm:P2_has_type <term/event_type/reception> ;
+    crm:P30_transferred_custody_of <object/15> ;
+    crm:P29_custody_received_by <actor/3> .   # Hans / Jean Arp
+
+# event 732: reception -> E10 Transfer of Custody (Empfängerin Marguerite Arp-Hagenbach)
+<event/732>
+    a crm:E10_Transfer_of_Custody ;
+    crm:P2_has_type <term/event_type/reception> ;
+    crm:P30_transferred_custody_of <object/15> ;
+    crm:P29_custody_received_by <actor/4> .   # Marguerite Arp-Hagenbach
+
+# -----------------------------------------------------------------------------
+# 4. Notizen (notes) — E33 Linguistic Object, typisiert + mehrsprachig
+# -----------------------------------------------------------------------------
+
+<note/3475> a crm:E33_Linguistic_Object ;
+    crm:P2_has_type <term/note_type/scopecontent> ;
+    crm:P190_has_symbolic_content "Handschriftlich. - \"Cette semaine nous avons sorti du four les épreuves colorées des céramiques [...]\""@de .
+
+<note/14> a crm:E33_Linguistic_Object ;
+    crm:P2_has_type <term/note_type/extent_text> ;
+    crm:P190_has_symbolic_content "1 Blatt, 2 Seiten."@de .
+    # Alternativ als crm:E54_Dimension am Objekt modellierbar (s. mapping.md §1).
+
+<note/89> a crm:E33_Linguistic_Object ;
+    crm:P2_has_type <term/note_type/reproductions> ;
+    crm:P190_has_symbolic_content "Fotokopie"@de .
+
+# internal_note: in Anton als privat geführt -> beim öffentlichen Export filtern.
+# (Inhalt hier durch Platzhalter ersetzt, da privat; zeigt nur den Filter-Fall.)
+<note/2986> a crm:E33_Linguistic_Object ;
+    crm:P2_has_type <term/note_type/internal_note> ;
+    crm:P190_has_symbolic_content "[interne Standortangabe]"@de .
+
+# -----------------------------------------------------------------------------
+# 5. Medium (media) — digitale Repräsentation des Briefs
+# -----------------------------------------------------------------------------
+
+<media/76>
+    a crmdig:D1_Digital_Object ;
+    crm:P2_has_type <term/format/application-pdf> ;          # mime_type
+    crm:P2_has_type <term/pronom/fmt-18> ;                   # pronom_id
+    crm:P1_is_identified_by
+        [ a crm:E41_Appellation ; crm:P190_has_symbolic_content "fma_hs_k_30_3-0001.pdf" ] ,
+        [ a crm:E42_Identifier ; crm:P2_has_type <term/identifier_type/md5> ;
+          crm:P190_has_symbolic_content "263b76af9c52a376022862c0dd502395" ] ;
+    crm:P43_has_dimension [ a crm:E54_Dimension ;
+        crm:P90_has_value 883211 ;
+        crm:P91_has_unit <term/unit/byte> ] .
+
+# -----------------------------------------------------------------------------
+# 6. Actors (actors) — E21 Person, mit Geburt/Tod + Authority-Links
+# -----------------------------------------------------------------------------
+
+<actor/5>
+    a crm:E21_Person , rico:Person ;
+    crm:P2_has_type <term/actor_type/person> ;
+    crm:P1_is_identified_by [ a crm:E41_Appellation ;
+        crm:P190_has_symbolic_content "Janco, Marcel" ] ;
+    crm:P98i_was_born [ a crm:E67_Birth ;
+        crm:P4_has_time-span [ crm:P82a_begin_of_the_begin "1895-05-24"^^xsd:date ] ] ;
+    crm:P100i_died_in [ a crm:E69_Death ;
+        crm:P4_has_time-span [ crm:P82b_end_of_the_end "1984-04-21"^^xsd:date ] ] ;
+    owl:sameAs <https://d-nb.info/gnd/118711695> ,
+               <http://viaf.org/viaf/29501079> ,
+               <https://www.wikidata.org/wiki/Q33935> .
+
+<actor/3>
+    a crm:E21_Person , rico:Person ;
+    crm:P2_has_type <term/actor_type/person> ;
+    crm:P1_is_identified_by [ a crm:E41_Appellation ;
+        crm:P190_has_symbolic_content "Arp, Hans / Jean" ] ;
+    crm:P98i_was_born [ a crm:E67_Birth ;
+        crm:P4_has_time-span [ crm:P82a_begin_of_the_begin "1886-09-16"^^xsd:date ] ] ;
+    crm:P100i_died_in [ a crm:E69_Death ;
+        crm:P4_has_time-span [ crm:P82b_end_of_the_end "1966-06-07"^^xsd:date ] ] ;
+    owl:sameAs <https://d-nb.info/gnd/118504398> ,
+               <https://viaf.org/viaf/7386175/> ,
+               <https://www.wikidata.org/wiki/Q153739> .
+
+<actor/4>
+    a crm:E21_Person , rico:Person ;
+    crm:P2_has_type <term/actor_type/person> ;
+    crm:P1_is_identified_by [ a crm:E41_Appellation ;
+        crm:P190_has_symbolic_content "Arp-Hagenbach, Marguerite" ] ;
+    crm:P98i_was_born [ a crm:E67_Birth ;
+        crm:P4_has_time-span [ crm:P82a_begin_of_the_begin "1902-08-22"^^xsd:date ] ] ;
+    crm:P100i_died_in [ a crm:E69_Death ;
+        crm:P4_has_time-span [ crm:P82b_end_of_the_end "1994-08-23"^^xsd:date ] ] .
+    # keine externen Authority-Links in den Daten vorhanden
+
+# -----------------------------------------------------------------------------
+# 7. Ort (places) — E53 Place
+# -----------------------------------------------------------------------------
+
+<place/5>
+    a crm:E53_Place , rico:Place ;
+    crm:P1_is_identified_by [ a crm:E48_Place_Name ;
+        crm:P190_has_symbolic_content "Tel Aviv"@de ] ;
+    # Anton-DB: POINT(32.08088 34.78057) = (lat lon); GeoSPARQL erwartet (lon lat):
+    crm:P168_place_is_defined_by "POINT(34.78057 32.08088)"^^geo:wktLiteral ;
+    crm:P89_falls_within <place/country/IL> ;
+    owl:sameAs <https://www.geonames.org/293397> ,
+               <https://www.wikidata.org/wiki/Q33935> ,
+               <https://d-nb.info/gnd/4059353-8> .
+
+<place/country/IL> a crm:E53_Place ;
+    crm:P1_is_identified_by [ a crm:E48_Place_Name ;
+        crm:P190_has_symbolic_content "IL" ] .
+
+# -----------------------------------------------------------------------------
+# 8. Sachbegriff (keywords) — E55 Type / skos:Concept
+# -----------------------------------------------------------------------------
+
+<keyword/2>
+    a crm:E55_Type , skos:Concept ;
+    skos:prefLabel "Keramik (HA)"@de .
+
+# -----------------------------------------------------------------------------
+# 9. Vokabular-Terme (terms / taxonomies) — E55 Type + skos:Concept
+# -----------------------------------------------------------------------------
+
+<term/level_of_description/collection>  a crm:E55_Type , skos:Concept ; skos:prefLabel "Collection"@de ; skos:inScheme <scheme/level_of_description> .
+<term/level_of_description/recordgroup> a crm:E55_Type , skos:Concept ; skos:prefLabel "Bestandesgruppe"@de ; skos:inScheme <scheme/level_of_description> .
+<term/level_of_description/fonds>       a crm:E55_Type , skos:Concept ; skos:prefLabel "Bestand"@de ; skos:inScheme <scheme/level_of_description> .
+<term/level_of_description/file>        a crm:E55_Type , skos:Concept ; skos:prefLabel "Dossier"@de ; skos:inScheme <scheme/level_of_description> .
+<term/level_of_description/item>        a crm:E55_Type , skos:Concept ; skos:prefLabel "Dokument"@de ; skos:inScheme <scheme/level_of_description> .
+
+<term/event_type/creation>  a crm:E55_Type , skos:Concept ; skos:prefLabel "Entstehung"@de .
+<term/event_type/reception> a crm:E55_Type , skos:Concept ; skos:prefLabel "Empfang"@de .
+
+<term/note_type/scopecontent>  a crm:E55_Type , skos:Concept ; skos:prefLabel "Enthält / Darin"@de .
+<term/note_type/extent_text>   a crm:E55_Type , skos:Concept ; skos:prefLabel "Umfang"@de .
+<term/note_type/reproductions> a crm:E55_Type , skos:Concept ; skos:prefLabel "Reproduktionen"@de .
+<term/note_type/internal_note> a crm:E55_Type , skos:Concept ; skos:prefLabel "Interne Notiz"@de .
+
+<term/actor_type/person> a crm:E55_Type , skos:Concept ; skos:prefLabel "Person"@de .
+
+<term/identifier_type/reference_number> a crm:E55_Type , skos:Concept ; skos:prefLabel "Signatur"@de .
+<term/identifier_type/md5>              a crm:E55_Type , skos:Concept ; skos:prefLabel "MD5-Prüfsumme"@de .
+
+<term/format/application-pdf> a crm:E55_Type , skos:Concept ; skos:prefLabel "application/pdf" .
+<term/pronom/fmt-18>          a crm:E55_Type , skos:Concept ; skos:prefLabel "Acrobat PDF 1.4 (fmt/18)" .
+<term/unit/byte>              a crm:E58_Measurement_Unit ; skos:prefLabel "Byte"@de .
