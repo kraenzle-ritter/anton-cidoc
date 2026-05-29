@@ -165,3 +165,53 @@ Barely used (test data only in the inspected tenants). Two types observed:
 `source_type` is mostly `page` (a CMS page of the website/edition), not an
 archival object → largely out of scope for the **archival** RDF export. Extend
 later if needed.
+
+## 8. RiC-O value lists (what RiC defines itself)
+
+Verified against RiC-O 1.1 (ICA-EGAD repository). RiC-O is **type-class rich but
+value-list poor**: it defines many **typing classes** (subclasses of `rico:Type`:
+`DocumentaryFormType`, `RecordSetType`, `AgentType`, `CorporateBodyType`,
+`ActivityType`, `EventType`, `RecordState`, `CarrierType`, `OccupationType`, …)
+as the *slots* for controlled values, but ships only **two small ready-made SKOS
+vocabularies** (in `ontology/current-version/modularized-version/`):
+
+| RiC vocabulary | concepts | namespace |
+|---|---|---|
+| **RecordSetTypes** | `Collection`, `Fonds`, `Series`, `File` | `https://www.ica.org/standards/RiC/vocabularies/recordSetTypes#` |
+| **DocumentaryFormTypes** | `AuthorityRecord`, `FindingAid`, `IIIFManifest` | `https://www.ica.org/standards/RiC/vocabularies/documentaryFormTypes#` |
+
+Everything else (agent types, place types, activity types, languages, occupations,
+…) is **deliberately left to implementers**. The many vocabulary files in the
+RiC-O `examples/` folder (`FRAN_RI_001_documentaryFormTypes`, `…occupationTypes`,
+`…activityTypes`, `…corporateBodyTypes`, `…languages`, `legalStatuses`, …) belong
+to the **Archives nationales de France** — they are an *institution's examples*,
+**not** normative RiC lists.
+
+> This confirms the overall strategy: since RiC prescribes almost no value lists,
+> aligning to **external** vocabularies (Getty AAT for `object_type` §2, GeoNames
+> for `place_type` §3) is exactly the approach RiC intends — implementers are
+> expected to bring or publish their own vocabularies.
+
+### `level_of_description` → RiC RecordSetTypes
+
+Anton's `level_of_description` has a direct (partial) hit in RiC RecordSetTypes.
+Align each Anton level term (a local `crm:E55_Type` / `skos:Concept`) via
+`skos:exactMatch`:
+
+| Anton `level_of_description` | RiC RecordSetType | note |
+|---|---|---|
+| `collection` | `recordSetTypes#Collection` | — |
+| `fonds` | `recordSetTypes#Fonds` | — |
+| `series` | `recordSetTypes#Series` | — |
+| `file` | `recordSetTypes#File` | — |
+| `recordgroup` | — | no RiC term (intermediate level) |
+| `class` | — | no RiC term (intermediate level) |
+| `item` | — | maps to the class `rico:Record`, not a RecordSetType |
+
+```turtle
+@prefix ricovoc: <https://www.ica.org/standards/RiC/vocabularies/recordSetTypes#> .
+
+<term/level_of_description/fonds> a crm:E55_Type , skos:Concept ;
+    skos:prefLabel "Bestand"@de ;
+    skos:exactMatch ricovoc:Fonds .
+```
