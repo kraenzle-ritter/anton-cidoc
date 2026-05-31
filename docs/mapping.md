@@ -1,6 +1,9 @@
 # Mapping specification: Anton → CIDOC CRM (+ RiC-O)
 
-Status: **draft v0.1**. Lead model **CIDOC CRM 7.1.x**, secondary model **RiC-O 1.0**.
+Status: **draft v0.1**. Lead model **CIDOC CRM 7.1.x**, secondary model **RiC-O 1.1**
+(May 2025; backward-compatible and additive vs. 1.0 — it mainly enriches
+instantiations/agents and adds a generic `rico:note` superproperty, see
+[§ RiC-AG cross-check](#ric-ag-cross-check-v01)).
 Examples in RDF/Turtle.
 
 ## Namespaces
@@ -263,6 +266,10 @@ list and ISAD correspondence: [`vocabularies.md`](vocabularies.md) §6. Short,
 untyped texts may be emitted simply as `crm:P3_has_note` (E62 String) with
 `crm:P3.1_has_type`.
 
+> **RiC-O 1.1:** for note types without a specific RiC-O property, use the new generic
+> `rico:note` datatype property (the 1.1 superproperty of all `note` properties) as the
+> RiC-O fallback, instead of forcing everything onto `rico:descriptiveNote`.
+
 ---
 
 ## 7. Media — digital object / representation
@@ -318,6 +325,34 @@ GeoNames feature classes) via `skos:exactMatch` — see
 [`vocabularies.md`](vocabularies.md).
 
 ---
+
+## RiC-AG cross-check (v0.1)
+
+Checked against the official **RiC Application Guidelines** (RiC-AG v0.1, draft,
+29 Oct 2025; sections *Mappings* and *Combining RiC with other standards*).
+
+- **CRM + RiC combined use is officially endorsed.** RiC-AG lists CIDOC CRM among the
+  standards RiC "can be combined with" and recommends linking a RiC-O description to a
+  description in another conceptual model **by URI** — exactly this spec's CRM-lead +
+  RiC-O-alignment + `owl:sameAs` approach.
+- **Caveat to mind (RiC-AG):** *"descriptions expressed in RiC can be mapped to CIDOC CRM,
+  but with considerable loss of specificity."* We mitigate this by emitting **both** the
+  CRM and the RiC-O triples per entity (the two columns in every table above). The
+  exporter must therefore produce the RiC-O statements too, not CRM alone — otherwise the
+  RiC-specific nuance (Record/Record Set/Record Part, instantiation, relation attributes)
+  is lost. **Dual emission is a hard requirement, not optional.**
+- **No CIDOC CRM crosswalk exists** in RiC-AG (it only ships ICA-standards→RiC-CM and
+  EAD 2002→RiC-O 1.1 crosswalks). Our Anton→CRM mapping has no official template to verify
+  against — it is bespoke. The EAD→RiC-O route (via the open-source *RiC-O Converter*) is
+  only relevant if EAD interchange is ever needed; Anton maps directly from its DB.
+- **IRI strategy:** RiC-AG asks implementers to define an explicit IRI strategy and notes
+  that existing authority records + controlled vocabularies are a "favorable situation".
+  Anton already satisfies this (URI strategy table above, `resources`→`owl:sameAs`,
+  `terms`→`skos:Concept`). ✓
+- **Anton exceeds the guidance** on external linking: RiC-AG stays silent on
+  `owl:sameAs`/`skos:exactMatch` and names no concrete vocabularies (GND, GeoNames, AAT,
+  VIAF, Wikidata). Anton uses these actively — addressing the "isolationism" gap the
+  guidelines leave open.
 
 ## Findings from the proof of concept
 
