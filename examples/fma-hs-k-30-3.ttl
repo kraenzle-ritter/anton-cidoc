@@ -13,6 +13,17 @@
 # Data literals (titles, names, note text) are kept in their original language
 # (German/French @de) — this is the real archival content.
 #
+# Emission profile: A+ (CRM-primary, selective RiC-O).
+#   * CRM carries the full detail (lead model).
+#   * RiC-O is emitted selectively: class typing + the core relational skeleton
+#     (isOrWasIncludedIn, hasCreator, hasOrHadSubject, hasInstantiation), so the
+#     RiC-O view is navigable but not a full parallel of CRM. Literal attributes
+#     (titles, identifiers, dates) stay CRM-side for now. See docs/fidelity.md.
+#   * Work/carrier: the unit of description is modelled as intellectual content
+#     (E73 Information Object; the letter additionally E33 Linguistic Object),
+#     consistent with rico:Record — NOT as a physical E22 object. Digital
+#     carriers are separate (media = D1 / rico:Instantiation).
+#
 # Real-data quirks handled (see inline comments):
 #   * geo: Anton stores POINT(lat lon) -> GeoSPARQL WKT requires POINT(lon lat)
 #   * date 0000-00-00 (reception without a date) -> time-span omitted
@@ -34,11 +45,13 @@
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 
 # -----------------------------------------------------------------------------
-# 1. Hierarchy (objects) — E22, linked via P46 / P46i
+# 1. Hierarchy (objects) — E73 Information Object (intellectual unit of
+#    description), CRM links P46 / P46i; RiC-O skeleton: rico:RecordSet +
+#    rico:isOrWasIncludedIn (child -> parent).
 # -----------------------------------------------------------------------------
 
 <object/1>
-    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    a crm:E73_Information_Object , rico:RecordSet ;
     crm:P2_has_type <term/level_of_description/collection> ;
     crm:P1_is_identified_by <object/1/identifier> ;
     crm:P102_has_title [ a crm:E35_Title ;
@@ -50,33 +63,36 @@
     crm:P190_has_symbolic_content "FMA" .
 
 <object/10>
-    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    a crm:E73_Information_Object , rico:RecordSet ;
     crm:P2_has_type <term/level_of_description/recordgroup> ;
     crm:P1_is_identified_by [ a crm:E42_Identifier ;
         crm:P190_has_symbolic_content "FMA HS" ] ;
     crm:P102_has_title [ a crm:E35_Title ;
         crm:P190_has_symbolic_content "Manuskripte, Typoskripte; umfasst hauptsächlich Dokumente bis zum Tod von Marguerite Arp-Hagenbach (1994)."@de ] ;
     crm:P46i_forms_part_of <object/1> ;
+    rico:isOrWasIncludedIn <object/1> ;
     crm:P46_is_composed_of <object/12> .
 
 <object/12>
-    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    a crm:E73_Information_Object , rico:RecordSet ;
     crm:P2_has_type <term/level_of_description/fonds> ;
     crm:P1_is_identified_by [ a crm:E42_Identifier ;
         crm:P190_has_symbolic_content "FMA HS K" ] ;
     crm:P102_has_title [ a crm:E35_Title ;
         crm:P190_has_symbolic_content "Korrespondenz"@de ] ;
     crm:P46i_forms_part_of <object/10> ;
+    rico:isOrWasIncludedIn <object/10> ;
     crm:P46_is_composed_of <object/13> .
 
 <object/13>
-    a crm:E22_Human-Made_Object , rico:RecordSet ;
+    a crm:E73_Information_Object , rico:RecordSet ;
     crm:P2_has_type <term/level_of_description/file> ;
     crm:P1_is_identified_by [ a crm:E42_Identifier ;
         crm:P190_has_symbolic_content "FMA HS K/30" ] ;
     crm:P102_has_title [ a crm:E35_Title ;
         crm:P190_has_symbolic_content "Korrespondenz, Druckerzeugnisse, Akten zur Reise ins \"Heilige Land\" (Ägypten, Palästina, Israel, Jordanien) sowie Aufenthalt in Ein Hod von Hans/Jean Arp / Marguerite Arp-Hagenbach"@de ] ;
     crm:P46i_forms_part_of <object/12> ;
+    rico:isOrWasIncludedIn <object/12> ;
     crm:P46_is_composed_of <object/15> .
 
 # -----------------------------------------------------------------------------
@@ -84,7 +100,7 @@
 # -----------------------------------------------------------------------------
 
 <object/15>
-    a crm:E22_Human-Made_Object , rico:Record ;
+    a crm:E73_Information_Object , crm:E33_Linguistic_Object , rico:Record ;
     crm:P2_has_type <term/level_of_description/item> ;
     crm:P1_is_identified_by [ a crm:E42_Identifier ;
         crm:P2_has_type <term/identifier_type/reference_number> ;
@@ -96,11 +112,18 @@
     crm:P108i_was_produced_by <event/8> ;
     crm:P30i_custody_transferred_through <event/731> , <event/732> ;
     # subject term / aboutness (objects_keywords)
-    crm:P67_refers_to <keyword/2> ;
+    crm:P129_is_about <keyword/2> ;
     # typed notes (§4)
     crm:P67i_is_referred_to_by <note/14> , <note/89> , <note/2986> , <note/3475> ;
     # digital representation (§5)
-    crm:P138i_has_representation <media/76> .
+    crm:P138i_has_representation <media/76> ;
+    # --- RiC-O skeleton (A+): relations only; literals stay CRM-side ---
+    rico:isOrWasIncludedIn <object/13> ;
+    rico:hasCreator        <actor/5> ;     # sender of the letter (creation event)
+    rico:hasOrHadSubject   <keyword/2> ;
+    rico:hasInstantiation  <media/76> .
+    # NB: the recipients (custody, events 731/732) are carried CRM-side only;
+    #     they are not in the RiC-O skeleton (documented gap, see docs/fidelity.md).
 
 # -----------------------------------------------------------------------------
 # 3. Events (antonevents)
@@ -162,7 +185,7 @@
 # -----------------------------------------------------------------------------
 
 <media/76>
-    a crmdig:D1_Digital_Object ;
+    a crmdig:D1_Digital_Object , rico:Instantiation ;
     crm:P2_has_type <term/format/application-pdf> ;          # mime_type
     crm:P2_has_type <term/pronom/fmt-18> ;                   # pronom_id
     crm:P1_is_identified_by

@@ -61,9 +61,12 @@ lies in *configuration* (lookups, vocabulary alignment) and *normalization*
   translate cleanly.
 
 **Points of friction (solvable, but decide consciously)**
-- **Class choice `E22` vs. `E73`:** Anton does not separate the physical carrier
-  from the intellectual content — the export must commit (recommendation: `E22`,
-  born-digital additionally `crmdig:D1`).
+- **Unit-of-description class (`E73`, not `E22`):** Anton does not separate the physical
+  carrier from the intellectual content. The export treats the unit as *intellectual
+  content* — `crm:E73_Information_Object` (text also `crm:E33`, image `crm:E36`/`E38`,
+  document `crm:E31`), consistent with `rico:RecordResource`; physical artefacts stay
+  `crm:E22`, digital carriers are separate (`media` → `crmdig:D1` / `rico:Instantiation`).
+  A strict separate-carrier-node split is deferred — see [`docs/fidelity.md`](docs/fidelity.md).
 - **`object_type` is tenant-dependent:** needs a **per-tenant** alignment to
   Getty AAT — maintenance work, not a modelling issue. (Only this type;
   `place_type` is standard-bound, see above.)
@@ -116,6 +119,7 @@ Pivot / descriptor links: `actors_objects`, `objects_places`, `objects_keywords`
 - [`docs/mapping.md`](docs/mapping.md) — the actual mapping specification, entity by entity
 - [`docs/event-types.md`](docs/event-types.md) — all 17 Anton event types → CRM classes (verified)
 - [`docs/vocabularies.md`](docs/vocabularies.md) — verified vocabularies (actor/object/note types, rights/access, relations) + AAT & GeoNames alignment
+- [`docs/fidelity.md`](docs/fidelity.md) — field-by-field audit: where the export preserves, degrades or drops information (CRM vs. RiC-O, A+ profile)
 - [`examples/fma-hs-k-30-3.ttl`](examples/fma-hs-k-30-3.ttl) — proof of concept from real data
   (tenant `fondazionearp`, letter Janco→Arp): fonds hierarchy, production/reception event,
   actors with authority links, place with geo, typed notes, digital object. Validated

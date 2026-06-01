@@ -49,14 +49,25 @@ internal identifiers).
 
 ## 1. AntonObject — unit of description
 
-**CRM lead class:** `crm:E22_Human-Made_Object`
-(archival material as a produced object; born-digital optionally additionally `crmdig:D1_Digital_Object`).
+**CRM lead class:** the unit of description is modelled as **intellectual content**, so
+the CRM class is consistent with RiC's `rico:RecordResource` (which is intellectual, not
+physical): `crm:E73_Information_Object` — textual items additionally
+`crm:E33_Linguistic_Object`, images `crm:E36`/`E38`, documents `crm:E31`. Genuinely
+*physical* artefacts (object_type `object`) stay `crm:E22_Human-Made_Object`. **Carriers
+are separate:** digital files → `media` as `crmdig:D1_Digital_Object` / `rico:Instantiation`
+(§7). A fully separate physical-carrier node (RiC's strict work/instantiation split) is
+deferred — see [`fidelity.md`](fidelity.md).
 **RiC-O:** `rico:RecordResource` — aggregations (collection/fonds/series/class/recordgroup) →
 `rico:RecordSet`, single items (item/file) → `rico:Record` / `rico:RecordPart`.
 
+> **Why not `E22`?** `crm:E22_Human-Made_Object` is a *physical* thing; typing the same
+> node `crm:E22 , rico:Record` is contradictory (physical vs. intellectual). Using an
+> `E73` (information object) lead class removes that clash and matches the object_type
+> refinements already recommended (`photo`→`E38`, `manuscript`/`print`→`E31`, both ⊂ `E73`).
+
 | Anton field | CRM | RiC-O |
 |---|---|---|
-| (entity) | `<object/{id}> a crm:E22_Human-Made_Object` | `a rico:RecordResource` |
+| (entity) | `<object/{id}> a crm:E73_Information_Object` (text also `crm:E33`; physical artefacts `crm:E22`) | `a rico:RecordResource` |
 | `identifier` (reference code) | `crm:P1_is_identified_by` → `crm:E42_Identifier` (type "reference number") | `rico:hasOrHadIdentifier` / `rico:identifier` |
 | `identifier_old` | another `crm:E42_Identifier`, type "former reference" | `rico:identifier` (type former) |
 | `title` (multilingual JSON) | `crm:P102_has_title` → `crm:E35_Title`, text via `crm:P190_has_symbolic_content` + `@lang` | `rico:hasOrHadTitle` / `rico:title` (langString) |
@@ -74,7 +85,7 @@ internal identifiers).
 
 ```turtle
 <object/100>
-    a crm:E22_Human-Made_Object ;
+    a crm:E73_Information_Object , rico:RecordSet ;
     crm:P2_has_type <term/level_of_description/fonds> ;
     crm:P1_is_identified_by <object/100/identifier> ;
     crm:P102_has_title <object/100/title> ;
@@ -90,9 +101,10 @@ internal identifiers).
     crm:P190_has_symbolic_content "Nachlass Anna Müller"@de .
 
 <object/101>
-    a crm:E22_Human-Made_Object ;
+    a crm:E73_Information_Object , rico:RecordSet ;
     crm:P2_has_type <term/level_of_description/series> ;
-    crm:P46i_forms_part_of <object/100> .
+    crm:P46i_forms_part_of <object/100> ;       # CRM
+    rico:isOrWasIncludedIn <object/100> .        # RiC-O skeleton (A+)
 ```
 
 ---
@@ -229,7 +241,7 @@ this separate from events.
 | Anton | CRM | RiC-O |
 |---|---|---|
 | Keyword (entity) | `crm:E55_Type` or `crm:E89_Propositional_Object` (alt.: `skos:Concept`) | `rico:concept` / `skos:Concept` |
-| `keywords` (objects_keywords) | object `crm:P67_refers_to` keyword, **or** `crm:P129_is_about` | `rico:hasOrHadSubject` |
+| `keywords` (objects_keywords) | object `crm:P129_is_about` → keyword (preferred; `crm:P67_refers_to` is the weaker "refers to") | `rico:hasOrHadSubject` |
 | `places_descriptors` (objects_places) | object `crm:P129_is_about` → `crm:E53_Place` | `rico:hasOrHadSubject` → `rico:Place` |
 | `actors_descriptors` (actors_objects) | object `crm:P129_is_about` → actor | `rico:hasOrHadSubject` → `rico:Agent` |
 
@@ -335,12 +347,17 @@ Checked against the official **RiC Application Guidelines** (RiC-AG v0.1, draft,
   standards RiC "can be combined with" and recommends linking a RiC-O description to a
   description in another conceptual model **by URI** — exactly this spec's CRM-lead +
   RiC-O-alignment + `owl:sameAs` approach.
-- **Caveat to mind (RiC-AG):** *"descriptions expressed in RiC can be mapped to CIDOC CRM,
-  but with considerable loss of specificity."* We mitigate this by emitting **both** the
-  CRM and the RiC-O triples per entity (the two columns in every table above). The
-  exporter must therefore produce the RiC-O statements too, not CRM alone — otherwise the
-  RiC-specific nuance (Record/Record Set/Record Part, instantiation, relation attributes)
-  is lost. **Dual emission is a hard requirement, not optional.**
+- **Emission profile — A+ (current).** CRM is primary and carries the full detail. RiC-O
+  is emitted **selectively**: class typing (`rico:RecordSet`/`Record`/`Instantiation`/
+  `Person`/`Place`) plus the core relational skeleton — `rico:isOrWasIncludedIn`,
+  `rico:hasCreator`/`hasProvenance`, `rico:hasOrHadSubject`, `rico:hasInstantiation` — so
+  the RiC-O view is navigable but **not** a full parallel of CRM. Literal attributes
+  (titles, identifiers, dates, notes) stay CRM-side for now. The RiC-AG caveat
+  (*"mapping RiC to CIDOC CRM loses specificity"*) is the **opposite** of our actual risk:
+  here CRM is the rich view and RiC-O the lean one. A full field-by-field audit of where
+  information is or isn't preserved — and the deferred upgrade paths (full RiC-O
+  parallelism *B*, or a clean work/carrier split in named graphs *C*) — is in
+  [`fidelity.md`](fidelity.md).
 - **No CIDOC CRM crosswalk exists** in RiC-AG (it only ships ICA-standards→RiC-CM and
   EAD 2002→RiC-O 1.1 crosswalks). Our Anton→CRM mapping has no official template to verify
   against — it is bespoke. The EAD→RiC-O route (via the open-source *RiC-O Converter*) is
@@ -357,7 +374,7 @@ Checked against the official **RiC Application Guidelines** (RiC-AG v0.1, draft,
 ## Findings from the proof of concept
 
 Validated against real data (`examples/fma-hs-k-30-3.ttl`, tenant `fondazionearp`,
-227 triples, serializes cleanly to Turtle/JSON-LD/RDF-XML). Export-critical points
+236 triples, A+ emission profile, parses cleanly as Turtle). Export-critical points
 the exporter must handle:
 
 1. **Turtle IRIs:** `/` is **not** allowed in Turtle prefixed names (`a:object/1`).
