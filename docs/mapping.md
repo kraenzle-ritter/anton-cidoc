@@ -188,7 +188,7 @@ An `antonevents` record links object, actor, place, date and an event type
 | `date_start` / `date_end` (person) | `crm:P98i_was_born` → `crm:E67_Birth`; `crm:P100i_died_in` → `crm:E69_Death` (each with `crm:E52_Time-Span`) | `rico:hasBirthDate` / `rico:hasDeathDate` |
 | `date_start` / `date_end` (corporate body) | `crm:E66_Formation` (`P95i`), `crm:E68_Dissolution` (`P99i`) | `rico:hasBeginningDate` / `rico:hasEndDate` |
 | `resources` (GND/VIAF/Wikidata) | `owl:sameAs` / `skos:exactMatch` → external URI | `rico:hasOrHadIdentifier` + `owl:sameAs` |
-| `notes` (biographical) | `crm:P3_has_note` or `crm:E33_Linguistic_Object` (§6) | `rico:history` / `rico:descriptiveNote` |
+| `notes` (biographical) | `crm:P3_has_note` or `crm:E33_Linguistic_Object` (§6) | `rico:history` (or `rico:note`) |
 
 **Role in an event** (`antonevents.actor_id`): via the event (§2),
 `crm:P14_carried_out_by`. Specific role via `crm:P14.1_in_the_role_of` → `crm:E55_Type`.
@@ -255,32 +255,43 @@ this separate from events.
 Polymorphic on object/actor/place/keyword (`model_type`/`model_id`), type via
 `note_type_id`, with `locale`. Multilingual & typed → its own resource:
 
-**CRM:** `crm:E33_Linguistic_Object` · **RiC-O:** `rico:descriptiveNote` / specific properties.
+**CRM:** `crm:E33_Linguistic_Object` (typed node, linked via `crm:P67i`).
+**RiC-O:** the note text is **also** emitted as the matching RiC-O **datatype property**
+on the described entity (so the descriptive semantic survives in the RiC-O view, not just
+a local type term — see [`fidelity.md`](fidelity.md) loss #2). This is the one place A+
+duplicates a literal onto the RiC-O side on purpose.
 
 ```turtle
+# CRM: typed note node (carries the local Anton type)
 <note/777>
     a crm:E33_Linguistic_Object ;
     crm:P2_has_type <term/note_type/scopecontent> ;
     crm:P190_has_symbolic_content "Enthält Korrespondenz 1898–1910 …"@de .
+<object/101> crm:P67i_is_referred_to_by <note/777> .
 
-<object/101> crm:P67i_is_referred_to_by <note/777> .   # or crm:P3_has_note (short)
+# RiC-O: the same text via the standard property on the entity
+<object/101> rico:scopeAndContent "Enthält Korrespondenz 1898–1910 …"@de .
 ```
 
-| Anton `note_type` | CRM type / property | RiC-O |
+Note-type → RiC-O datatype property (**verified against the RiC-O 1.1 RDF**):
+
+| Anton `note_type` | RiC-O property | ISAD(G) |
 |---|---|---|
-| `scopecontent` | `crm:E33` type scopecontent (link `crm:P67i`) | `rico:scopeAndContent` |
-| `extent_text` | `crm:E33` type extent (or `crm:E54_Dimension`, §1) | `rico:recordResourceExtent` |
-| `internal_note` | `crm:E33` type internal (export filter `private`) | `rico:descriptiveNote` (internal) |
-| biographical/history (actor) | `crm:P3_has_note` on the actor | `rico:history` |
+| `scopecontent` | `rico:scopeAndContent` | 3.3.1 |
+| `extent_text` | `rico:recordResourceExtent` *(or `crm:E54_Dimension`, §1)* | 3.1.5 |
+| `bioghist`, `custod_hist` | `rico:history` *(on the actor / resource)* | 3.2.2 / 3.2.3 |
+| `arrangement` | `rico:recordResourceStructure` | 3.3.4 |
+| `physical_description` | `rico:physicalCharacteristicsNote` | 3.4.4 |
+| `accruals` | `rico:accrualsStatus` | 3.3.3 |
+| `condition_of_access` | `rico:conditionsOfAccess` *(also rights, §5)* | 3.4.1 |
+| `condition_of_reproduction` | `rico:conditionsOfUse` | 3.4.2 |
+| all others (`appraisal`, `finding_aids`, `general_note`, `reproductions`, `publications`, `related_units`, `language_script`, …) | `rico:note` *(generic 1.1 superproperty)* | various |
+| `internal_note`, `archivists_notes`, `comment` (private) | — *(filtered out, §5)* | — |
 
-There are 38 note types in total, mostly mapping to ISAD(G)/EAD elements — full
-list and ISAD correspondence: [`vocabularies.md`](vocabularies.md) §6. Short,
-untyped texts may be emitted simply as `crm:P3_has_note` (E62 String) with
-`crm:P3.1_has_type`.
-
-> **RiC-O 1.1:** for note types without a specific RiC-O property, use the new generic
-> `rico:note` datatype property (the 1.1 superproperty of all `note` properties) as the
-> RiC-O fallback, instead of forcing everything onto `rico:descriptiveNote`.
+> **No `rico:descriptiveNote`** — that property does **not** exist in RiC-O; the generic
+> fallback is `rico:note` (added in 1.1, domain `rico:Thing`, superproperty of the specific
+> note properties). There are 38 note types in total — full list and ISAD correspondence in
+> [`vocabularies.md`](vocabularies.md) §6.
 
 ---
 

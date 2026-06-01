@@ -1,7 +1,7 @@
 # Fidelity audit: where information is (and isn't) preserved
 
 Status **draft v0.1**. Grounded in the real PoC (`examples/fma-hs-k-30-3.ttl`,
-tenant `fondazionearp`, 236 triples, A+ emission profile). Companion to
+tenant `fondazionearp`, 239 triples, A+ emission profile). Companion to
 [`mapping.md`](mapping.md).
 
 This answers a concrete question: **where does the Anton → RDF export actually lose
@@ -30,9 +30,10 @@ CRM is the lead model and carries the **full** detail. RiC-O is emitted **select
   (and `rico:hasProvenance`), `rico:hasOrHadSubject` (aboutness), `rico:hasInstantiation`.
 - **Shared (model-neutral):** `owl:sameAs` authority links, `skos:Concept` vocabularies.
 
-Literal attributes (titles, identifiers, dates, note text), events and their actors/places,
-and most descriptive properties stay **CRM-side only**. This is a deliberate A+ choice, not
-an oversight.
+Literal attributes (titles, identifiers, dates), events and their actors/places, and most
+descriptive properties stay **CRM-side only**. This is a deliberate A+ choice, not an
+oversight. **Exception:** note text is *also* emitted as the matching RiC-O note property
+(loss #2 fix below).
 
 ## Field-coverage matrix
 
@@ -88,7 +89,7 @@ an oversight.
 ### Note
 | Anton | CRM | RiC-O (A+) | Verdict |
 |---|---|---|---|
-| typed multilingual note | `E33` + `P2 type` + `P190`@lang | ✗ (`rico:note` fallback only) | ◑ **see loss #2** |
+| typed multilingual note | `E33` + `P2 type` + `P190`@lang | `rico:scopeAndContent`/`history`/`recordResourceExtent`/… else `rico:note` | ✓ (loss #2 fixed) |
 | private note types | export filter | export filter | ✓ (excluded) |
 
 ### Media
@@ -111,11 +112,12 @@ an oversight.
 - **CRM-only view → full fidelity.** Hierarchy, identifiers, titles, both events
   (creation + the two receptions), actors with birth/death + authority links, place with
   geo, typed notes, media with checksum/dimension. Nothing essential is lost.
-- **RiC-O-only view → relational skeleton.** You get: `RecordSet`/`Record`/`Instantiation`/
-  `Person`/`Place` classes; the inclusion hierarchy; `hasCreator` (the sender);
-  `hasOrHadSubject`; `hasInstantiation`. You **do not** get: any title/identifier/date/note
-  text, the **recipients**, the place geometry, or the actors' birth/death. → a navigable
-  graph, **not** a usable description.
+- **RiC-O-only view → relational skeleton + notes.** You get: `RecordSet`/`Record`/
+  `Instantiation`/`Person`/`Place` classes; the inclusion hierarchy; `hasCreator` (the
+  sender); `hasOrHadSubject`; `hasInstantiation`; and the note text via RiC-O note
+  properties (`scopeAndContent`, `recordResourceExtent`, `note`). You **do not** get: the
+  title/identifier/dates, the **recipients**, the place geometry, or the actors'
+  birth/death. → a graph with the descriptive notes but still not a full description.
 
 **Round-trip:** the Anton record is largely reconstructable from the CRM view (minus
 `full_text` and some `object_type` nuance); it is **not** reconstructable from the RiC-O
@@ -127,12 +129,14 @@ view alone.
    but not content/events/recipients. This is the single biggest "loss" — and it is the
    *opposite* of the RiC-AG caveat: here CRM is the rich view, RiC-O the lean one. Closing
    it = upgrade path B.
-2. **Note-type ISAD/RiC semantics are not machine-readable.** The 38 note types are mapped
-   to ISAD(G) in [`vocabularies.md`](vocabularies.md) §6, but the export emits only the
-   *local* type term (`<term/note_type/scopecontent>`), with no `skos:exactMatch` and no
-   specific RiC property. **Cheap fix, recommended next:** add `skos:exactMatch` on the
-   note-type `E55` terms and emit `rico:scopeAndContent`/`rico:history`/… where RiC-O has a
-   matching property; fall back to `rico:note` otherwise.
+2. **Note-type semantics — FIXED.** Previously the RiC-O view carried nothing for notes
+   (only a local CRM type term). Now the note text is emitted as the matching RiC-O
+   datatype property on the entity (`rico:scopeAndContent`, `rico:recordResourceExtent`,
+   `rico:history`, `rico:recordResourceStructure`, `rico:physicalCharacteristicsNote`,
+   `rico:accrualsStatus`, `rico:conditionsOfAccess`/`conditionsOfUse`; generic `rico:note`
+   otherwise — all verified against the RiC-O 1.1 RDF). Mapping table: `mapping.md` §6.
+   *Note:* a `skos:exactMatch` to ISAD(G) was considered and rejected — ISAD has no concept
+   URIs, so the semantic travels via the RiC-O **property**, not a concept alignment.
 3. **Work/carrier split is partial.** Switching the unit class to `E73` removed the
    `E22`+`rico:Record` contradiction, but there is still no separate physical-carrier node
    (RiC's strict work/instantiation split). Acceptable for now; full split = upgrade path C.
@@ -157,6 +161,6 @@ view alone.
 
 ## Concrete next actions
 
-- [ ] Loss #2: emit `skos:exactMatch` + specific `rico:` note properties (cheap, high value).
+- [x] Loss #2: emit specific `rico:` note properties (done; verified against RiC-O 1.1).
 - [ ] Decide if/when to take upgrade path **B** (RiC-O standalone) — currently not needed.
 - [ ] Re-run this audit once the exporter is implemented (it must reproduce the A+ profile).

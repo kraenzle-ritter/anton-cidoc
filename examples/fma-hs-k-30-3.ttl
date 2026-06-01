@@ -180,6 +180,15 @@
     crm:P2_has_type <term/note_type/internal_note> ;
     crm:P190_has_symbolic_content "[internal location note]"@de .
 
+# RiC-O note properties (Loss #2 fix): the same note text via the standard RiC-O
+# datatype property on the entity, so the descriptive semantic is machine-readable
+# in the RiC-O view too (not just as a local type term). internal_note is private
+# and therefore NOT emitted on the RiC-O side.
+<object/15>
+    rico:scopeAndContent      "Handschriftlich. - \"Cette semaine nous avons sorti du four les épreuves colorées des céramiques [...]\""@de ;   # scopecontent
+    rico:recordResourceExtent "1 Blatt, 2 Seiten."@de ;          # extent_text
+    rico:note                 "Fotokopie"@de .                   # reproductions (no specific RiC-O property)
+
 # -----------------------------------------------------------------------------
 # 5. Media (media) — digital representation of the letter
 # -----------------------------------------------------------------------------

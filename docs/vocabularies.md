@@ -119,6 +119,14 @@ RiC-O: `rico:regulatedBy → rico:Rule` (`rico:AccessRule`) with effective date.
 + `@locale`, `crm:P2_has_type` = note type), linked via
 `crm:P67i_is_referred_to_by` to the described object/actor.
 
+> **RiC-O side (A+, loss #2 fix):** in addition, the note text is emitted as the matching
+> RiC-O **datatype property** on the entity, so the semantic is machine-readable in the
+> RiC-O view. The note-type → RiC-O property table (verified against the RiC-O 1.1 RDF:
+> `scopeAndContent`, `recordResourceExtent`, `history`, `recordResourceStructure`,
+> `physicalCharacteristicsNote`, `accrualsStatus`, `conditionsOfAccess`, `conditionsOfUse`,
+> else generic `rico:note`) lives in [`mapping.md`](mapping.md) §6. Note: `rico:descriptiveNote`
+> does **not** exist — the generic fallback is `rico:note`.
+
 Key types with ISAD/semantic correspondence:
 
 | Anton `note_type` | ISAD(G) / semantics | special handling |
