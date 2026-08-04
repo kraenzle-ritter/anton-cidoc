@@ -45,8 +45,8 @@ oversight. **Exception:** note text is *also* emitted as the matching RiC-O note
 | `identifier`, `identifier_old` | `E42` typed | ✗ | CRM-only |
 | `title` (multilingual) | `E35`/`P190`@lang | ✗ | CRM-only |
 | `object_count`, `extent_cm` | `P57`, `E54` | ✗ | CRM-only |
-| `location_id` | `P55` → `E53` | ✗ | CRM-only |
-| `period_of_protection` | `E30_Right` (coarse) | ✗ | ◑ (source-side poverty) |
+| `location_id` | `P55` → `E53` | `rico:hasOrHadPhysicalLocation` → `rico:PhysicalLocation` | ✓ both views |
+| `period_of_protection` | `P104` → `E30_Right` + term + `E52` release year | `rico:isOrWasRegulatedBy` → `rico:Rule`, `rico:conditionsOfAccess` | ✓ both views |
 | `private` | export filter | export filter | ✓ (excluded) |
 | `full_text` | not exported | ✗ | intentional drop |
 
@@ -163,4 +163,48 @@ view alone.
 
 - [x] Loss #2: emit specific `rico:` note properties (done; verified against RiC-O 1.1).
 - [ ] Decide if/when to take upgrade path **B** (RiC-O standalone) — currently not needed.
-- [ ] Re-run this audit once the exporter is implemented (it must reproduce the A+ profile).
+- [x] Re-run this audit once the exporter is implemented (Phase 1, anton#231, 2026-06-01).
+
+## Phase 1 audit (2026-06-01)
+
+Exporter implemented in Anton as the Artisan command `anton:export-rdf`
+(`app/Services/Exporter/Rdf/`, sweetrdf/easyrdf, openspec change
+`add-rdf-export-cidoc-crm`). Output verified against this fidelity matrix by
+parsing the produced Turtle back into an `EasyRdf\Graph` and walking it. The A+
+profile reproduces as designed; the table above (§ "Field-coverage matrix")
+holds without correction. Specific points re-confirmed against the running
+exporter on tenant `kr`:
+
+- **AntonObject** — full CRM detail (E73 lead class with object_type subclass
+  refinement, P46/P46i hierarchy, E42 identifier(s), E35 multilingual title,
+  P57 part count), plus the RiC-O skeleton (`rico:RecordSet`/`Record` per
+  level, `rico:isOrWasIncludedIn` reverse hierarchy). ✓
+- **AntonEvent** — 17 event types looked up via config (event-types.md is the
+  source of truth), CRM event class + object property + actor + place + dates
+  via `DateNormaliser`, plus the Anton term redundantly via `P2_has_type`.
+  Per A+ the RiC-O side emits `rico:hasCreator` (creation/writing/text_author/
+  production/engravation/edition) and `rico:hasProvenance` (provenance/
+  acquisition) on the linked object. ✓
+- **Note doubling (loss #2 fix)** — typed `crm:E33_Linguistic_Object` AND the
+  matching RiC-O datatype property (`rico:scopeAndContent`, `rico:history`,
+  `rico:recordResourceExtent`, etc., generic `rico:note` fallback) emitted on
+  the host entity. Verified end-to-end with a fixture note. ✓
+- **Data quirks** — all three documented in `mapping.md` "Findings" handled:
+  WKT `POINT(lat lon)` → `POINT(lon lat)`, `0000-00-00` drops the time-span,
+  `YYYY-00-00` reduces to `xsd:gYear`, instance IRIs emitted as relative IRIs
+  against a tenant-scoped `@base`. ✓
+- **Access filter** — central `Support/AccessFilter.php`: `objects.private`,
+  `media.private_media`, `actors.private`, plus private note types
+  (`internal_note`, `archivists_notes`, `comment`). Private rows emit no
+  triples, neither as subject nor as object — verified with private-object,
+  private-note, and private-media fixtures. ✓
+
+Open points carried into a future audit:
+- Place `private` filter and Keyword `private` filter — the Anton `kr` schema
+  has no `private` column on `places`/`keywords`, so the filter is a no-op
+  there. When/if these columns are added (or another tenant has them) the
+  filter logic in `AccessFilter::allows()` needs to be extended.
+- WKT regression test currently skips (no place with `location` in the kr
+  seed). Re-confirm against `fondazionearp` once the PoC tenant is reachable.
+- JSON-LD and RDF/XML serialisations are not yet exercised; same in-memory
+  graph just needs the alternative serializer wiring in Phase 2.

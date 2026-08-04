@@ -105,12 +105,28 @@ description. For a public export usually omitted (export `final` only).
 | `media.private_media` | media not public | filter analogously |
 | `actors/places/keywords.private` | authority private | filter analogously |
 | note with `note_type=internal_note` | private note (`notes` has **no** `private` column!) | exclude private note types |
-| `period_of_protection` (`public`, `standard`, `prolonged`, `standard_10`, `standard_20`, `forever`) | protection-period regime | `crm:E30_Right` / `rico:AccessRule` |
+| `period_of_protection` (`public`, `standard`, `prolonged`, `standard_10`, `standard_20`, `forever`) | protection-period regime | `crm:E30_Right` / `rico:Rule` |
 | `release_year` / `expiry_year` (note) | end of protection period | `crm:E30_Right` + date; RiC `rico:Rule` |
 
 Protection-period modelling (CRM): object `crm:P104_is_subject_to → crm:E30_Right`
 (type = period_of_protection term), end of period as an associated date.
-RiC-O: `rico:regulatedBy → rico:Rule` (`rico:AccessRule`) with effective date.
+RiC-O: `rico:isOrWasRegulatedBy → rico:Rule`, typed via `rico:hasOrHadRuleType`.
+
+> **Verified against the published RiC-O 1.1 ontology (2026-08).** Earlier drafts
+> of this spec named `rico:regulatedBy` and `rico:AccessRule`. Neither is usable:
+> `regulatedBy` was renamed `isOrWasRegulatedBy` for RiC-CM 0.2 compliance and
+> survives only as a `skos:changeNote`, and `AccessRule` does not exist as a
+> class — `rico:Rule` (with subclass `rico:Mandate`) is the only rule class.
+> Emitting either would produce a graph no RiC-O validator accepts.
+
+**Records whose release year cannot be derived.** Anton computes the release year
+as creation year + period. Where the creation date is missing the year is
+unknown, and the export says so rather than emitting a computed one: the rule is
+still attached (with its type and duration) but carries no `crm:E52_Time-Span`,
+and `rico:conditionsOfAccess` reads *"Protection period applies; release year
+unknown (no creation date)"*. A date derived from year 0 would read as long
+expired — the failure mode that Anton issue #355 removed on the application side.
+
 
 ## 6. Note types — taxonomy of the non-`antonevent` `antonfields`
 

@@ -75,8 +75,8 @@ deferred — see [`fidelity.md`](fidelity.md).
 | `parent_id` (hierarchy) | `crm:P46i_forms_part_of` → parent object (parent: `crm:P46_is_composed_of`) | `rico:isOrWasIncludedIn` ↔ `rico:includesOrIncluded` |
 | `object_count` | `crm:P57_has_number_of_parts` (xsd:integer) | `rico:hasInstantiation` / `rico:recordResourceExtent` |
 | `extent_cm` | `crm:P43_has_dimension` → `crm:E54_Dimension` (unit cm, `crm:E58_Measurement_Unit`) | `rico:hasExtent` → `rico:Extent` |
-| `release_year` / protection period (`period_of_protection_id`) | `crm:P104_is_subject_to` → `crm:E30_Right` (embargo) | `rico:hasOrHadHolder` / `rico:regulatedBy` → `rico:Rule` |
-| `private` (bool) | access status via `crm:E30_Right` / export filter | `rico:AccessRule` |
+| `release_year` / protection period (`period_of_protection_id`) | `crm:P104_is_subject_to` → `crm:E30_Right` (embargo), period term via `crm:P2_has_type`, release year as `crm:P4_has_time-span` → `crm:E52_Time-Span` | `rico:isOrWasRegulatedBy` → `rico:Rule` (+ `rico:hasOrHadRuleType`), plus a plain-language `rico:conditionsOfAccess` literal |
+| `private` (bool) | access status via `crm:E30_Right` / export filter | export filter (RiC-O 1.1 has no access-rule class of its own; use `rico:Rule`) |
 | `status_of_description_id` | `crm:P2_has_type` → `crm:E55_Type` (editing status) | `rico:descriptionLevel` accompanying info |
 | `location_id` (physical location) | `crm:P55_has_current_location` → `crm:E53_Place` | `rico:hasOrHadPhysicalLocation` |
 | full text (`full_text`) | (not exported; internal) | — |
