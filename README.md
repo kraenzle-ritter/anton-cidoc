@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/github/license/kraenzle-ritter/anton-cidoc)](LICENSE)
 [![CIDOC CRM](https://img.shields.io/badge/CIDOC-CRM-0b5394)](https://cidoc-crm.org/)
-[![RiC-O](https://img.shields.io/badge/RiC--O-alignment-0b5394)](https://www.ica.org/standards/RiC/RiC-O_v0-2.html)
+[![RiC-O](https://img.shields.io/badge/RiC--O-alignment-0b5394)](https://github.com/ICA-EGAD/RiC-O)
 
 Goal: a precise, serialization-neutral **mapping** of the data held in the Anton
 archival management application onto **CIDOC CRM** (lead model) with a
