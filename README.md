@@ -1,5 +1,9 @@
 # anton-cidoc — Mapping Anton data to CIDOC CRM & Records in Context
 
+[![License](https://img.shields.io/github/license/kraenzle-ritter/anton-cidoc)](LICENSE)
+[![CIDOC CRM](https://img.shields.io/badge/CIDOC-CRM-0b5394)](https://cidoc-crm.org/)
+[![RiC-O](https://img.shields.io/badge/RiC--O-alignment-0b5394)](https://www.ica.org/standards/RiC/RiC-O_v0-2.html)
+
 Goal: a precise, serialization-neutral **mapping** of the data held in the Anton
 archival management application onto **CIDOC CRM** (lead model) with a
 **RiC-O** alignment (Records in Context Ontology), as the basis for an RDF export.
